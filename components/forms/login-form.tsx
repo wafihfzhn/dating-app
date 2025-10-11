@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +8,9 @@ import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/app/context/auth-context";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export function LoginForm({
   className,
@@ -17,15 +20,21 @@ export function LoginForm({
   const [password, setPassword] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
-
+  const { user, loading: authLoading } = useAuth();
   const supabase = createClient();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (user && !authLoading) {
+      router.push("/");
+    }
+  }, [user, authLoading, router])
 
   async function handleAuth(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
 
     try {
-      console.log(`email: ${email} | password: ${password}`)
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
     } catch (error: any) {
@@ -39,7 +48,10 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="gap-4">
         <CardHeader className="text-center gap-0">
-          <CardTitle className="text-2xl">Welcome back</CardTitle>
+          <Link href="/" className="text-center">
+            <h3 className="text-3xl font-bold uppercase pb-2">Dating App</h3>
+          </Link>
+          <CardTitle className="text-xl">Welcome back</CardTitle>
           <CardDescription>
             Login with your account
           </CardDescription>
@@ -64,21 +76,13 @@ export function LoginForm({
                 />
               </Field>
               <Field>
-                <div className="flex items-center">
-                  <FieldLabel htmlFor="password">Password</FieldLabel>
-                  <a
-                    href="#"
-                    className="ml-auto text-sm underline-offset-4 hover:underline"
-                  >
-                    Forgot your password?
-                  </a>
-                </div>
+                <FieldLabel htmlFor="password">Password</FieldLabel>
                 <Input
                   id="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Input yor password"
+                  placeholder="Input your password"
                   required
                 />
               </Field>
@@ -87,7 +91,7 @@ export function LoginForm({
                   {loading ? "Loading.." : "Login"}
                 </Button>
                 <FieldDescription className="text-center">
-                  Don&apos;t have an account? <a href="#">Sign up</a>
+                  Don't have an account? <a href="/register">Register</a>
                 </FieldDescription>
               </Field>
             </FieldGroup>
